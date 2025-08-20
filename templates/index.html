@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCF101 Video Action Recognition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4facfe;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #4facfe;
+            background-color: #e3f2fd;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .prediction-rank {
+            background: #4facfe;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .prediction-info {
+            flex: 1;
+        }
+
+        .prediction-class {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .prediction-probability {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .prediction-percentage {
+            font-weight: bold;
+            color: #4facfe;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c62828;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #1565c0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .supported-formats {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 UCF101 Video Action Recognition</h1>
+            <p>Upload a video to classify human actions using our CNN-RNN model</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📹</div>
+                    <div class="upload-text">Drag and drop a video file here or click to browse</div>
+                    <input type="file" id="videoFile" class="file-input" accept="video/*">
+                    <button class="upload-btn" id="uploadBtn">Choose Video File</button>
+                </div>
+                
+                <div class="supported-formats">
+                    Supported formats: MP4, AVI, MOV, MKV, WMV, FLV (max 100MB)
+                </div>
+            </div>
+            
+            <div class="progress" id="progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; color: #666;">
+                    Processing video... Please wait
+                </div>
+            </div>
+            
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div>Analyzing video with AI model...</div>
+            </div>
+            
+            <div class="results" id="results">
+                <h3>🎯 Classification Results</h3>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const videoFile = document.getElementById('videoFile');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progress = document.getElementById('progress');
+            const progressFill = document.getElementById('progressFill');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const resultsList = document.getElementById('resultsList');
+
+            // Debug: Check if elements are found
+            console.log('DOM elements found:', {
+                uploadArea: !!uploadArea,
+                videoFile: !!videoFile,
+                uploadBtn: !!uploadBtn,
+                progress: !!progress,
+                progressFill: !!progressFill,
+                loading: !!loading,
+                results: !!results,
+                resultsList: !!resultsList
+            });
+
+            // Drag and drop functionality
+            if (uploadArea) {
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFile(files[0]);
+                    }
+                });
+
+                uploadArea.addEventListener('click', () => {
+                    if (videoFile) videoFile.click();
+                });
+            }
+
+            if (videoFile) {
+                videoFile.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFile(e.target.files[0]);
+                    }
+                });
+            }
+
+            function handleFile(file) {
+                // Validate file type
+                const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv', 'video/wmv', 'video/flv'];
+                if (!allowedTypes.includes(file.type)) {
+                    showError('Please select a valid video file (MP4, AVI, MOV, MKV, WMV, FLV)');
+                    return;
+                }
+
+                // Validate file size (100MB)
+                if (file.size > 100 * 1024 * 1024) {
+                    showError('File size must be less than 100MB');
+                    return;
+                }
+
+                uploadVideo(file);
+            }
+
+            function uploadVideo(file) {
+                const formData = new FormData();
+                formData.append('video', file);
+
+                // Show progress
+                if (progress) progress.style.display = 'block';
+                if (loading) loading.style.display = 'block';
+                if (results) results.style.display = 'none';
+                if (uploadBtn) uploadBtn.disabled = true;
+
+                // Simulate progress
+                let progressValue = 0;
+                const progressInterval = setInterval(() => {
+                    progressValue += Math.random() * 15;
+                    if (progressValue > 90) progressValue = 90;
+                    if (progressFill) progressFill.style.width = progressValue + '%';
+                }, 200);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    clearInterval(progressInterval);
+                    if (progressFill) progressFill.style.width = '100%';
+                    
+                    setTimeout(() => {
+                        if (progress) progress.style.display = 'none';
+                        if (loading) loading.style.display = 'none';
+                        
+                        if (data.success) {
+                            showResults(data.results, data.filename);
+                        } else {
+                            showError(data.error || 'An error occurred during processing');
+                        }
+                        
+                        if (uploadBtn) uploadBtn.disabled = false;
+                    }, 500);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    clearInterval(progressInterval);
+                    if (progress) progress.style.display = 'none';
+                    if (loading) loading.style.display = 'none';
+                    if (uploadBtn) uploadBtn.disabled = false;
+                    showError('Network error: ' + error.message);
+                });
+            }
+
+            function showResults(predictionResults, filename) {
+                console.log('showResults called with:', { predictionResults, filename });
+                console.log('DOM elements in showResults:', { results: !!results, resultsList: !!resultsList });
+                
+                try {
+                    if (!results || !resultsList) {
+                        console.error('ERROR: results or resultsList elements not found!');
+                        console.error('results element:', results);
+                        console.error('resultsList element:', resultsList);
+                        return;
+                    }
+                    
+                    resultsList.innerHTML = '';
+                    
+                    predictionResults.forEach((result, index) => {
+                        try {
+                            const item = document.createElement('div');
+                            item.className = 'prediction-item';
+                            item.innerHTML = `
+                                <div class="prediction-rank">${index + 1}</div>
+                                <div class="prediction-info">
+                                    <div class="prediction-class">${result.class}</div>
+                                    <div class="prediction-probability">Probability: ${result.probability}</div>
+                                </div>
+                                <div class="prediction-percentage">${result.percentage}</div>
+                            `;
+                            resultsList.appendChild(item);
+                        } catch (itemError) {
+                            console.error(itemError);
+                        }
+                    });
+                    
+                    console.log('About to set results.style.display = "block"');
+                    results.style.display = 'block';
+                    console.log('Successfully set display to block');
+                    
+                    // Add success message
+                    try {
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'success';
+                        successMsg.innerHTML = `✅ Successfully analyzed: <strong>${filename}</strong>`;
+                        results.insertBefore(successMsg, results.firstChild);
+                    } catch (successError) {
+                        console.error(successError);
+                    }
+                    
+                    // Force a reflow to ensure display changes take effect
+                    try {
+                        results.offsetHeight;
+                    } catch (reflowError) {
+                        console.error(reflowError);
+                    }
+                    
+                } catch (mainError) {
+                    console.error('Main error in showResults:', mainError);
+                    // Fallback: try to show results anyway
+                    try {
+                        if (results) {
+                            results.style.display = 'block';
+                        }
+                    } catch (fallbackError) {
+                        console.error(fallbackError);
+                    }
+                }
+            }
+
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.innerHTML = `❌ ${message}`;
+                
+                // Remove any existing error messages
+                const existingErrors = document.querySelectorAll('.error');
+                existingErrors.forEach(err => err.remove());
+                
+                const content = document.querySelector('.content');
+                const uploadSection = document.querySelector('.upload-section');
+                if (content && uploadSection) {
+                    content.insertBefore(errorDiv, uploadSection);
+                }
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+
+            // Check server health on page load
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.model_loaded) {
+                        showError('Model not loaded. Please check server configuration.');
+                    }
+                })
+                .catch(error => {
+                    console.log('Health check failed:', error);
+                });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,16 @@
+# Analysis Scripts Requirements
+# Install with: pip install -r requirements_analysis.txt
+
+# Core plotting libraries
+matplotlib>=3.7.0
+seaborn>=0.12.0
+numpy>=1.24.0
+pandas>=1.5.0
+
+# Optional: for better plot styling
+plotly>=5.0.0
+kaleido>=0.2.1  # For static plot export
+
+# Optional: for interactive plots
+ipywidgets>=8.0.0
+jupyter>=1.0.0 

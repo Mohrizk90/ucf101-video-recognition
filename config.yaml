@@ -1,0 +1,39 @@
+data:
+  root: "../data/UCF101"
+  split: "split1"         # "auto" if not found
+  clip_len: 16
+  frame_stride: 2
+  img_size: 144
+  cache_decoded: false
+
+train:
+  epochs: 45
+  batch_size: 4
+  accum_steps: 2
+  lr: 0.0003
+  weight_decay: 0.0001
+  warmup_epochs: 5
+  label_smoothing: 0.1
+  early_stop_patience: 8
+  amp: true
+  freeze_backbone_until_epoch: 5
+  train_bn: true
+
+model:
+  backbone: "resnet18"
+  finetune_layers: ["layer3", "layer4"]  # trainable
+  lstm_hidden: 256
+  lstm_layers: 1
+  bidirectional: true
+  dropout: 0.3
+  num_classes: 101
+
+eval:
+  topk: [1, 5]
+  confmat: true
+  per_class_acc: true
+
+system:
+  seed: 42
+  num_workers: 4
+  cudnn_benchmark: true 
